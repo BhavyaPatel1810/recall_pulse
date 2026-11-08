@@ -1,33 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:workmanager/workmanager.dart';
-import 'services/notification_service.dart';
+import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
+import 'theme/pulse_colors.dart';
+import 'theme/pulse_theme.dart';
 
-@pragma('vm:entry-point')
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    WidgetsFlutterBinding.ensureInitialized();
-    final notificationService = NotificationService();
-    await notificationService.init();
-    await notificationService.triggerRandomDueCardNotification();
-    return Future.value(true);
-  });
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: PulseColors.obsidian,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
+  runApp(const RecallPulseApp());
 }
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  final notificationService = NotificationService();
-  await notificationService.init();
+class RecallPulseApp extends StatelessWidget {
+  const RecallPulseApp({super.key});
 
-  Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
-  Workmanager().registerPeriodicTask(
-    'recall_pulse_nudges',
-    'fetchDueCardTask',
-    frequency: const Duration(hours: 2),
-  );
-
-  runApp(const MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: HomeScreen(),
-  ));
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'RecallPulse',
+      debugShowCheckedModeBanner: false,
+      theme: PulseTheme.dark(),
+      home: const HomeScreen(),
+    );
+  }
 }

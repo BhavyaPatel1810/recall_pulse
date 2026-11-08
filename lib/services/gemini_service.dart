@@ -22,16 +22,19 @@ class GeminiService {
     required String rawText,
     required String deckId,
   }) async {
-    final prompt = 'Tum ek expert flashcard creator ho. Niche diye gaye study material ko padho aur high-yield flashcards create karo active recall ke liye.\n'
-        'Output sirf valid JSON array hona chahiye format me:\n'
-        '[\n'
-        '  {\n'
-        '    "question": "Clear and direct question",\n'
-        '    "answer": "Concise and accurate answer",\n'
-        '    "explanation": "Short conceptual explanation or context"\n'
-        '  }\n'
-        ']\n\n'
-        'Study Material:\n' + rawText;
+    final prompt = '''
+Tum ek expert flashcard creator ho. Niche diye gaye study material ko padho aur high-yield flashcards create karo active recall ke liye.
+Output sirf valid JSON array hona chahiye format me:
+[
+  {
+    "question": "Clear and direct question",
+    "answer": "Concise and accurate answer",
+    "explanation": "Short conceptual explanation or context"
+  }
+]
+
+Study Material:
+$rawText''';
 
     final content = [Content.text(prompt)];
     final response = await _model.generateContent(content);
@@ -73,11 +76,14 @@ class GeminiService {
       apiKey: apiKey,
     );
 
-    final prompt = 'Context:\n'
-        'Flashcard Question: ' + cardQuestion + '\n'
-        'Flashcard Answer: ' + cardAnswer + '\n\n'
-        'Student Doubt: ' + userQuery + '\n\n'
-        'Direct, crisp aur conceptual clarification do.';
+    final prompt = '''
+Context:
+Flashcard Question: $cardQuestion
+Flashcard Answer: $cardAnswer
+
+Student Doubt: $userQuery
+
+Direct, crisp aur conceptual clarification do.''';
 
     final response = await doubtModel.generateContent([Content.text(prompt)]);
     return response.text ?? 'Koi explanation generate nahi ho saka.';
