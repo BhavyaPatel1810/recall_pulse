@@ -88,13 +88,20 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           ElevatedButton(
             onPressed: () async {
-              if (titleController.text.trim().isEmpty) return;
-              await DatabaseHelper.instance.insertDeck(
-                Deck(id: const Uuid().v4(), title: titleController.text.trim(), createdAt: DateTime.now()),
-              );
-              Navigator.pop(context);
-              _loadData();
-            },
+  if (titleController.text.trim().isNotEmpty) {
+    final title = titleController.text.trim();
+    Navigator.pop(context); // Pehle dialog safely close karo
+    
+    // Phir database mein insert karke data reload karo
+    await DatabaseHelper.instance.insertDeck(
+      Deck(id: const Uuid().v4(), title: title),
+    );
+    
+    if (mounted) {
+      loadData(); // Ab safely state update hogi
+    }
+  }
+},
             child: const Text('Create'),
           ),
         ],
