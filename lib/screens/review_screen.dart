@@ -8,7 +8,7 @@ import '../services/database_helper.dart';
 import '../services/gemini_service.dart';
 import '../services/settings_service.dart';
 import '../theme/pulse_theme.dart';
-import 'settings_screen.dart';
+import 'notification_settings_screen.dart';
 
 class ReviewScreen extends StatefulWidget {
   final Deck deck;
