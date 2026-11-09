@@ -140,7 +140,7 @@ class _ReviewScreenState extends State<ReviewScreen> with SingleTickerProviderSt
                   textColor: Colors.white,
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                      MaterialPageRoute(builder: (_) => SettingsScreen()),
                     );
                   },
                 )
