@@ -1,78 +1,128 @@
+import 'dart:convert';
+
 class Flashcard {
   final String id;
   final String deckId;
   final String question;
   final String answer;
-  final String explanation;
-  final int repetitions;
+  final String aiExplanation;
+  final List<String> tags;
   final double easeFactor;
   final int interval;
+  final int repetitions;
   final DateTime nextReviewDate;
-  final DateTime createdAt;
+  final bool isStarredForNotification;
+  final DateTime updatedAt;
+  final bool isSynced;
+  final bool isDeleted;
 
-  Flashcard({
+  const Flashcard({
     required this.id,
     required this.deckId,
     required this.question,
     required this.answer,
-    this.explanation = '',
-    this.repetitions = 0,
+    this.aiExplanation = '',
+    this.tags = const [],
     this.easeFactor = 2.5,
-    this.interval = 1,
+    this.interval = 0,
+    this.repetitions = 0,
     required this.nextReviewDate,
-    required this.createdAt,
+    this.isStarredForNotification = false,
+    required this.updatedAt,
+    this.isSynced = false,
+    this.isDeleted = false,
   });
+
+  Flashcard copyWith({
+    String? id,
+    String? deckId,
+    String? question,
+    String? answer,
+    String? aiExplanation,
+    List<String>? tags,
+    double? easeFactor,
+    int? interval,
+    int? repetitions,
+    DateTime? nextReviewDate,
+    bool? isStarredForNotification,
+    DateTime? updatedAt,
+    bool? isSynced,
+    bool? isDeleted,
+  }) {
+    return Flashcard(
+      id: id ?? this.id,
+      deckId: deckId ?? this.deckId,
+      question: question ?? this.question,
+      answer: answer ?? this.answer,
+      aiExplanation: aiExplanation ?? this.aiExplanation,
+      tags: tags ?? this.tags,
+      easeFactor: easeFactor ?? this.easeFactor,
+      interval: interval ?? this.interval,
+      repetitions: repetitions ?? this.repetitions,
+      nextReviewDate: nextReviewDate ?? this.nextReviewDate,
+      isStarredForNotification: isStarredForNotification ?? this.isStarredForNotification,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isSynced: isSynced ?? this.isSynced,
+      isDeleted: isDeleted ?? this.isDeleted,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'deck_id': deckId,
+      'deckId': deckId,
       'question': question,
       'answer': answer,
-      'explanation': explanation,
-      'repetitions': repetitions,
-      'ease_factor': easeFactor,
+      'aiExplanation': aiExplanation,
+      'tags': jsonEncode(tags),
+      'easeFactor': easeFactor,
       'interval': interval,
-      'next_review_date': nextReviewDate.toIso8601String(),
-      'created_at': createdAt.toIso8601String(),
+      'repetitions': repetitions,
+      'nextReviewDate': nextReviewDate.toIso8601String(),
+      'isStarredForNotification': isStarredForNotification ? 1 : 0,
+      'updatedAt': updatedAt.toIso8601String(),
+      'isSynced': isSynced ? 1 : 0,
+      'isDeleted': isDeleted ? 1 : 0,
     };
   }
 
   factory Flashcard.fromMap(Map<String, dynamic> map) {
+    List<String> parsedTags = [];
+    if (map['tags'] != null) {
+      try {
+        final decoded = jsonDecode(map['tags'] as String);
+        if (decoded is List) {
+          parsedTags = decoded.map((e) => e.toString()).toList();
+        }
+      } catch (_) {
+        parsedTags = (map['tags'] as String)
+            .split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
+      }
+    }
+
     return Flashcard(
-      id: map['id'],
-      deckId: map['deck_id'],
-      question: map['question'],
-      answer: map['answer'],
-      explanation: map['explanation'] ?? '',
-      repetitions: map['repetitions'] ?? 0,
-      easeFactor: map['ease_factor']?.toDouble() ?? 2.5,
-      interval: map['interval'] ?? 1,
-      nextReviewDate: DateTime.parse(map['next_review_date']),
-      createdAt: DateTime.parse(map['created_at']),
+      id: map['id'] as String,
+      deckId: map['deckId'] as String,
+      question: map['question'] as String? ?? '',
+      answer: map['answer'] as String? ?? '',
+      aiExplanation: map['aiExplanation'] as String? ?? '',
+      tags: parsedTags,
+      easeFactor: (map['easeFactor'] as num?)?.toDouble() ?? 2.5,
+      interval: (map['interval'] as num?)?.toInt() ?? 0,
+      repetitions: (map['repetitions'] as num?)?.toInt() ?? 0,
+      nextReviewDate: DateTime.tryParse(map['nextReviewDate'] as String? ?? '') ?? DateTime.now(),
+      isStarredForNotification: (map['isStarredForNotification'] as int? ?? 0) == 1,
+      updatedAt: DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? DateTime.now(),
+      isSynced: (map['isSynced'] as int? ?? 0) == 1,
+      isDeleted: (map['isDeleted'] as int? ?? 0) == 1,
     );
   }
 
-  Flashcard copyWith({
-    String? question,
-    String? answer,
-    String? explanation,
-    int? repetitions,
-    double? easeFactor,
-    int? interval,
-    DateTime? nextReviewDate,
-  }) {
-    return Flashcard(
-      id: id,
-      deckId: deckId,
-      question: question ?? this.question,
-      answer: answer ?? this.answer,
-      explanation: explanation ?? this.explanation,
-      repetitions: repetitions ?? this.repetitions,
-      easeFactor: easeFactor ?? this.easeFactor,
-      interval: interval ?? this.interval,
-      nextReviewDate: nextReviewDate ?? this.nextReviewDate,
-      createdAt: createdAt,
-    );
-  }
+  String toJson() => jsonEncode(toMap());
+
+  factory Flashcard.fromJson(String source) =>
+      Flashcard.fromMap(jsonDecode(source) as Map<String, dynamic>);
 }

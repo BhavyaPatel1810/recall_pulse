@@ -1,36 +1,100 @@
-name: Cloud APK Build
+name: Build RecallPulse Android APK
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - master
   workflow_dispatch:
 
 jobs:
-  build:
+  build-android-apk:
+    name: Compile Production RecallPulse APK
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    timeout-minutes: 35
 
-      - name: Set up Java
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17 & Gradle Cache
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
+          cache: 'gradle'
 
-      - name: Set up Flutter
+      - name: Setup Flutter Stable Channel
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
+          cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:'
 
-      - name: Get Dependencies
-        run: flutter pub get
+      - name: Configure Resilient Gradle Network & Memory Properties
+        run: |
+          mkdir -p ~/.gradle
+          cat << 'EOF' >> ~/.gradle/gradle.properties
+          org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=1G -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
+          org.gradle.daemon=false
+          org.gradle.parallel=true
+          org.gradle.caching=true
+          systemProp.http.connectionTimeout=180000
+          systemProp.http.socketTimeout=180000
+          systemProp.https.connectionTimeout=180000
+          systemProp.https.socketTimeout=180000
+          org.gradle.internal.http.connectionTimeout=180000
+          org.gradle.internal.http.socketTimeout=180000
+          EOF
 
-      - name: Build Debug APK
-        run: flutter build apk --debug
+      - name: Verify Android Scaffolding & Core Library Desugaring
+        run: |
+          # If android/ platform directory is incomplete, scaffold missing files without overwriting lib/ or AndroidManifest.xml
+          if [ ! -f "android/build.gradle" ] && [ ! -f "android/build.gradle.kts" ]; then
+            if [ -f "android/app/src/main/AndroidManifest.xml" ]; then
+              cp android/app/src/main/AndroidManifest.xml /tmp/AndroidManifest.backup.xml
+              flutter create . --platforms=android,linux --project-name=recallpulse
+              cp /tmp/AndroidManifest.backup.xml android/app/src/main/AndroidManifest.xml
+            else
+              flutter create . --platforms=android,linux --project-name=recallpulse
+            fi
+          fi
 
-      - name: Upload APK
+      - name: Fetch Flutter Dependencies (with Automatic Retry on Network Timeout)
+        run: |
+          for attempt in 1 2 3; do
+            echo "Running flutter pub get (Attempt $attempt of 3)..."
+            if flutter pub get; then
+              echo "Dependencies resolved successfully."
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "flutter pub get failed after 3 attempts."
+              exit 1
+            fi
+            sleep 10
+          done
+
+      - name: Build Release APK (with Automatic Retry for Gradle 504/Network Timeouts)
+        run: |
+          for attempt in 1 2 3; do
+            echo "Building Release APK (Attempt $attempt of 3)..."
+            if flutter build apk --release --no-tree-shake-icons; then
+              echo "APK build succeeded!"
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "APK build failed after 3 attempts."
+              exit 1
+            fi
+            echo "Transient Gradle/Maven error detected. Retrying in 15 seconds..."
+            sleep 15
+          done
+
+      - name: Upload RecallPulse-APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: RecallPulse-APK
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
