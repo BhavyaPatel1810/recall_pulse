@@ -42,7 +42,7 @@ class PulseTheme {
         bodyColor: textPrimary,
         displayColor: textPrimary,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: surfaceCard,
         elevation: 0,
         shape: RoundedRectangleBorder(
