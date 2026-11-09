@@ -134,11 +134,6 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('RecallPulse'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_active, color: Colors.orangeAccent),
-            tooltip: 'Trigger Notification Popup',
-            onPressed: () => NotificationService().triggerRandomDueCardNotification(),
-          ),
-          IconButton(
             icon: Icon(Icons.key, color: _geminiApiKey.isEmpty ? Colors.redAccent : Colors.lightGreenAccent),
             onPressed: _showApiKeyDialog,
           ),
