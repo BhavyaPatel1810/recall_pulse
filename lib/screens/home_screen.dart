@@ -3,7 +3,6 @@ import 'package:uuid/uuid.dart';
 import '../models/deck.dart';
 import '../models/flashcard.dart';
 import '../services/database_helper.dart';
-import '../services/notification_service.dart';
 import 'ai_card_creator_screen.dart';
 import 'review_screen.dart';
 
@@ -88,20 +87,19 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           ElevatedButton(
             onPressed: () async {
-  if (titleController.text.trim().isNotEmpty) {
-    final title = titleController.text.trim();
-    Navigator.pop(context); // Pehle dialog safely close karo
-    
-    // Phir database mein insert karke data reload karo
-    await DatabaseHelper.instance.insertDeck(
-      Deck(id: const Uuid().v4(), title: title),
-    );
-    
-    if (mounted) {
-      loadData(); // Ab safely state update hogi
-    }
-  }
-},
+              if (titleController.text.trim().isNotEmpty) {
+                final title = titleController.text.trim();
+                Navigator.pop(context);
+                
+                await DatabaseHelper.instance.insertDeck(
+                  Deck(id: const Uuid().v4(), title: title),
+                );
+                
+                if (mounted) {
+                  _loadData();
+                }
+              }
+            },
             child: const Text('Create'),
           ),
         ],
